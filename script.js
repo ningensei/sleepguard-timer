@@ -62,8 +62,11 @@ function startTimer() {
     beepCount = 0;
     isPaused = true;
     statusDiv.textContent = '🟢 Timer started. Detection paused for 5s...';
+    
     setTimeout(() => {
         isPaused = false;
+        beepCount = 0; 
+        lastBeepTime = Date.now(); // Fully reset the detection state.
         statusDiv.textContent = '🟢 Timer active. Listening for stop sequence...';
     }, CONFIG.COOLDOWN_PERIOD);
 }
