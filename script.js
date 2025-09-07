@@ -1,12 +1,29 @@
 // --- CONFIGURATION ---
+// This object holds all the adjustable parameters for beep detection.
 const CONFIG = {
+    // The frequencies (in Hz) that are considered a valid beep.
+    // Includes the fundamental frequency and its 3rd harmonic for cross-device compatibility.
     TARGET_FREQUENCIES: [2179, 6537], 
+    
+    // The margin of error (in Hz) allowed for frequency detection.
     FREQ_TOLERANCE: 150,
+    
+    // The volume threshold (0-255) a sound must exceed to be considered.
     SENSITIVITY: 75,
-    MIN_BEEP_DURATION: 50,
+    
+    // Minimum time in ms to wait between detecting consecutive beeps, to prevent double-counting.
+    BEEP_DEBOUNCE_MS: 150, 
+    
+    // Maximum time in ms allowed between beeps in a sequence before the counter resets.
     MAX_PAUSE_BETWEEN_BEEPS: 400,
+    
+    // Number of beeps required to start the timer.
     START_BEEP_COUNT: 2,
+    
+    // Number of beeps required to stop the timer.
     STOP_BEEP_COUNT: 5,
+    
+    // Cooldown period in ms after a start/stop action during which detection is paused.
     COOLDOWN_PERIOD: 5000,
 };
 
@@ -29,7 +46,7 @@ let source;
 let isListening = false;
 let beepCount = 0;
 let beepResetTimeout;
-let isBeeping = false;
+let lastBeepTime = 0; // Stores the timestamp of the last detected beep for debounce logic.
 let isPaused = false;
 let timerInterval;
 let startTime;
@@ -84,6 +101,7 @@ async function startListening() {
         source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
         isListening = true;
+        lastBeepTime = 0; // Reset timestamp on start
         startButton.disabled = true;
         startButton.textContent = 'Listening...';
         manualStartButton.disabled = false;
@@ -139,33 +157,34 @@ function detectAndVisualizeBeep() {
         peakFrequency < targetFreq + CONFIG.FREQ_TOLERANCE
     );
 
-    if (maxVal > CONFIG.SENSITIVITY && isBeepDetected) {
-        if (!isBeeping) {
-            isBeeping = true;
-            beepCount++;
+    const now = Date.now();
+    if (
+        maxVal > CONFIG.SENSITIVITY && 
+        isBeepDetected && 
+        (now - lastBeepTime > CONFIG.BEEP_DEBOUNCE_MS)
+    ) {
+        lastBeepTime = now;
+        beepCount++;
+        
+        clearTimeout(beepResetTimeout);
+        beepResetTimeout = setTimeout(() => { beepCount = 0; }, CONFIG.MAX_PAUSE_BETWEEN_BEEPS);
+        
+        if (beepCount >= 2) {
+            let statusText = `Beep detected (${beepCount})`;
             
-            clearTimeout(beepResetTimeout);
-            beepResetTimeout = setTimeout(() => { beepCount = 0; }, CONFIG.MAX_PAUSE_BETWEEN_BEEPS);
-            
-            if (beepCount >= 2) {
-                let statusText = `Beep detected (${beepCount})`;
-                
-                if (!timerInterval) {
-                    statusText += ` of ${CONFIG.START_BEEP_COUNT} to start.`;
-                    if (beepCount === CONFIG.START_BEEP_COUNT) {
-                        startTimer();
-                    }
-                } else {
-                    statusText += ` of ${CONFIG.STOP_BEEP_COUNT} to stop.`;
-                    if (beepCount >= CONFIG.STOP_BEEP_COUNT) {
-                        stopTimer();
-                    }
+            if (!timerInterval) {
+                statusText += ` of ${CONFIG.START_BEEP_COUNT} to start.`;
+                if (beepCount === CONFIG.START_BEEP_COUNT) {
+                    startTimer();
                 }
-                 statusDiv.textContent = statusText;
+            } else {
+                statusText += ` of ${CONFIG.STOP_BEEP_COUNT} to stop.`;
+                if (beepCount >= CONFIG.STOP_BEEP_COUNT) {
+                    stopTimer();
+                }
             }
+             statusDiv.textContent = statusText;
         }
-    } else {
-        setTimeout(() => { isBeeping = false; }, CONFIG.MIN_BEEP_DURATION);
     }
 
     requestAnimationFrame(detectAndVisualizeBeep);
