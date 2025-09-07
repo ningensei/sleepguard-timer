@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SleepGuard Timer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        #container {
+            padding: 20px 40px;
+            background-color: #1e1e1e;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 600px;
+            width: 90%;
+            margin: 20px auto;
+        }
+        h1 { margin-top: 0; color: #bb86fc; }
+        p { line-height: 1.6; }
+        details {
+            background-color: #2a2a2a;
+            border-left: 3px solid #bb86fc;
+            padding: 15px;
+            margin: 25px 0;
+            text-align: left;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95em;
+        }
+        summary { cursor: pointer; font-weight: bold; outline: none; }
+        summary::marker { color: #bb86fc; }
+        details p { margin-top: 15px; margin-bottom: 0; }
+        #status {
+            font-size: 1.2em;
+            margin: 20px 0;
+            min-height: 25px;
+            color: #03dac6; /* Default to a positive color */
+        }
+        #timer {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #03dac6;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+        #timestamps {
+            font-size: 0.9em;
+            color: #a0a0a0;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        #timestamps span { color: #e0e0e0; font-weight: bold; }
+        .button-group button {
+            background-color: #bb86fc;
+            color: #121212;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, opacity 0.3s;
+            margin: 5px;
+        }
+        .button-group button:hover { background-color: #a362f7; }
+        .button-group button:disabled { background-color: #333; color: #777; cursor: not-allowed; }
+        #frequencyCanvas { background-color: #0a0a0a; border-radius: 8px; margin-top: 30px; border: 1px solid #333; width: 100%; }
+        .debug-info { font-size: 1.1em; color: #a0a0a0; }
+        .debug-info span { color: #ffffff; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>SleepGuard Timer 🌙</h1>
+        
+        <details>
+            <summary>What is this tool?</summary>
+            <p>
+                This tool tracks the active usage time of your <strong>SleepGuard</strong> bruxism device. It uses the microphone to listen for the specific beep patterns that indicate when the device turns on and off, automatically starting and stopping a timer. This allows for an accurate measurement of how long the device was active.
+            </p>
+        </details>
+
+        <p>Press "Start Listening" and place the phone near your device.</p>
+        
+        <div class="button-group">
+            <button id="startButton">Start Listening</button>
+            <button id="manualStartButton">Manual Start/Stop</button>
+        </div>
+
+        <div id="status">Waiting to start session...</div>
+        <div id="timer">00:00:00</div>
+        
+        <div id="timestamps">
+            <div><strong>Start Time:</strong> <span id="startTimeDisplay">--</span></div>
+            <div><strong>End Time:</strong> <span id="endTimeDisplay">--</span></div>
+        </div>
+
+        <h2>Frequency Visualizer</h2>
+        <canvas id="frequencyCanvas" width="500" height="150"></canvas>
+        <p class="debug-info">
+            Peak Frequency: <span id="peakFreqDisplay">N/A</span> Hz | 
+            Volume: <span id="peakVolDisplay">N/A</span> / 255
+        </p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
