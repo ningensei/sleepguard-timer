@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 const CONFIG = {
-    TARGET_FREQUENCY: 2179,
-    FREQ_TOLERANCE: 5,
+    TARGET_FREQUENCIES: [2179, 6537], 
+    FREQ_TOLERANCE: 150,
     SENSITIVITY: 75,
     MIN_BEEP_DURATION: 50,
     MAX_PAUSE_BETWEEN_BEEPS: 400,
@@ -31,25 +31,20 @@ let beepCount = 0;
 let beepResetTimeout;
 let isBeeping = false;
 let isPaused = false;
-
 let timerInterval;
 let startTime;
 
 // --- Timer Functions ---
 function startTimer() {
     if (timerInterval) return;
-    
     const now = new Date();
     startTime = now.getTime();
     startTimeDisplay.textContent = now.toLocaleString();
-    endTimeDisplay.textContent = "--"; // Reset end time
-
+    endTimeDisplay.textContent = "--";
     timerInterval = setInterval(updateTimerDisplay, 1000);
     beepCount = 0;
-    
     isPaused = true;
     statusDiv.textContent = '🟢 Timer started. Detection paused for 5s...';
-    
     setTimeout(() => {
         isPaused = false;
         statusDiv.textContent = '🟢 Timer active. Listening for stop sequence...';
@@ -60,17 +55,11 @@ function stopTimer() {
     if (!timerInterval) return;
     clearInterval(timerInterval);
     timerInterval = null;
-
     const now = new Date();
     endTimeDisplay.textContent = now.toLocaleString();
-    
-    // --- FINAL ACTIONS ---
-    isListening = false; // Stop the detection loop permanently
+    isListening = false;
     beepCount = 0;
-    
     statusDiv.textContent = '✅ Session Complete. Press "Start Listening" for a new session.';
-    
-    // Re-enable the start button and disable the manual button for the next session
     startButton.disabled = false;
     startButton.textContent = 'Start Listening';
     manualStartButton.disabled = true;
@@ -90,22 +79,15 @@ async function startListening() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // ==========================================================
-        // THIS LINE IS NOW CORRECT
         analyser = audioContext.createAnalyser();
-        // ==========================================================
-        
         analyser.fftSize = 2048;
         source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
-        
-        isListening = true; // Enable listening
+        isListening = true;
         startButton.disabled = true;
         startButton.textContent = 'Listening...';
-        manualStartButton.disabled = false; // Enable manual button
+        manualStartButton.disabled = false;
         statusDiv.textContent = 'Microphone active, waiting for beep...';
-        
         detectAndVisualizeBeep();
     } catch (err) {
         console.error('Error during microphone setup:', err);
@@ -114,15 +96,12 @@ async function startListening() {
 }
 
 function detectAndVisualizeBeep() {
-    // The loop will now naturally stop when isListening becomes false
     if (!isListening) {
-        // Optional: Clear the visualizer when not listening
         canvasCtx.clearRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
         canvasCtx.fillStyle = 'rgb(0, 0, 0)';
         canvasCtx.fillRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
         return;
     }
-
     if (isPaused) {
         requestAnimationFrame(detectAndVisualizeBeep);
         return;
@@ -135,12 +114,10 @@ function detectAndVisualizeBeep() {
     canvasCtx.clearRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
     canvasCtx.fillStyle = 'rgb(0, 0, 0)';
     canvasCtx.fillRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
-
     const barWidth = (frequencyCanvas.width / bufferLength) * 2.5;
     let x = 0;
     let maxVal = 0;
     let maxIndex = 0;
-
     for (let i = 0; i < bufferLength; i++) {
         const barHeight = dataArray[i];
         if (barHeight > maxVal) {
@@ -157,11 +134,12 @@ function detectAndVisualizeBeep() {
     peakFreqDisplay.textContent = peakFrequency.toFixed(2);
     peakVolDisplay.textContent = maxVal;
 
-    if (
-        maxVal > CONFIG.SENSITIVITY &&
-        peakFrequency > CONFIG.TARGET_FREQUENCY - CONFIG.FREQ_TOLERANCE &&
-        peakFrequency < CONFIG.TARGET_FREQUENCY + CONFIG.FREQ_TOLERANCE
-    ) {
+    const isBeepDetected = CONFIG.TARGET_FREQUENCIES.some(targetFreq => 
+        peakFrequency > targetFreq - CONFIG.FREQ_TOLERANCE &&
+        peakFrequency < targetFreq + CONFIG.FREQ_TOLERANCE
+    );
+
+    if (maxVal > CONFIG.SENSITIVITY && isBeepDetected) {
         if (!isBeeping) {
             isBeeping = true;
             beepCount++;
