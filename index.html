@@ -71,7 +71,7 @@
             margin: 5px;
         }
         .button-group button:hover { background-color: #a362f7; }
-        .button-group button:disabled { background-color: #333; color: #777; cursor: not-allowed; }
+        .button-group button:disabled { background-color: #333; color: #777; cursor: not-allowed; opacity: 0.6; }
         #frequencyCanvas { background-color: #0a0a0a; border-radius: 8px; margin-top: 30px; border: 1px solid #333; width: 100%; }
         .debug-info { font-size: 1.1em; color: #a0a0a0; }
         .debug-info span { color: #ffffff; font-weight: bold; }
@@ -88,11 +88,11 @@
             </p>
         </details>
 
-        <p>Press "Start Listening" and place the phone near your device.</p>
+        <p>Press "Start Listening" and place the phone near your device. If the timer doesn't start with the initial 2 beeps, you can start it manually.</p>
         
         <div class="button-group">
             <button id="startButton">Start Listening</button>
-            <button id="manualStartButton">Manual Start/Stop</button>
+            <button id="manualStartButton" disabled>Manual Start/Stop</button>
         </div>
 
         <div id="status">Waiting to start session...</div>

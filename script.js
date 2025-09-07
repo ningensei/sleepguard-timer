@@ -70,9 +70,10 @@ function stopTimer() {
     
     statusDiv.textContent = '✅ Session Complete. Press "Start Listening" for a new session.';
     
-    // Re-enable the start button for the next session
+    // Re-enable the start button and disable the manual button for the next session
     startButton.disabled = false;
     startButton.textContent = 'Start Listening';
+    manualStartButton.disabled = true;
 }
 
 function updateTimerDisplay() {
@@ -89,7 +90,12 @@ async function startListening() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // ==========================================================
+        // THIS LINE IS NOW CORRECT
         analyser = audioContext.createAnalyser();
+        // ==========================================================
+        
         analyser.fftSize = 2048;
         source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
@@ -97,11 +103,12 @@ async function startListening() {
         isListening = true; // Enable listening
         startButton.disabled = true;
         startButton.textContent = 'Listening...';
+        manualStartButton.disabled = false; // Enable manual button
         statusDiv.textContent = 'Microphone active, waiting for beep...';
         
         detectAndVisualizeBeep();
     } catch (err) {
-        console.error('Error accessing the microphone:', err);
+        console.error('Error during microphone setup:', err);
         statusDiv.textContent = 'Error: Could not access the microphone.';
     }
 }
