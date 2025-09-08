@@ -43,7 +43,7 @@
             font-size: 1.2em;
             margin: 20px 0;
             min-height: 25px;
-            color: #03dac6; /* Default to a positive color */
+            color: #03dac6;
         }
         #timer {
             font-size: 3.5em;
@@ -52,12 +52,7 @@
             letter-spacing: 2px;
             margin-bottom: 15px;
         }
-        #timestamps {
-            font-size: 0.9em;
-            color: #a0a0a0;
-            margin-bottom: 25px;
-            line-height: 1.5;
-        }
+        #timestamps { font-size: 0.9em; color: #a0a0a0; margin-bottom: 25px; line-height: 1.5; }
         #timestamps span { color: #e0e0e0; font-weight: bold; }
         .button-group button {
             background-color: #bb86fc;
@@ -70,29 +65,41 @@
             transition: background-color 0.3s, opacity 0.3s;
             margin: 5px;
         }
-        .button-group button:hover { background-color: #a362f7; }
+        .button-group button.secondary { background-color: #cf6679; }
+        .button-group button:hover { opacity: 0.8; }
         .button-group button:disabled { background-color: #333; color: #777; cursor: not-allowed; opacity: 0.6; }
         #frequencyCanvas { background-color: #0a0a0a; border-radius: 8px; margin-top: 30px; border: 1px solid #333; width: 100%; }
         .debug-info { font-size: 1.1em; color: #a0a0a0; }
         .debug-info span { color: #ffffff; font-weight: bold; }
+        .settings { margin: 20px 0; }
     </style>
 </head>
 <body>
+    <audio id="alarmAudio" src="alarm.mp3" loop></audio>
+
     <div id="container">
         <h1>SleepGuard Timer 🌙</h1>
         
         <details>
             <summary>What is this tool?</summary>
             <p>
-                This tool tracks the active usage time of your <strong>SleepGuard</strong> bruxism device. It uses the microphone to listen for the specific beep patterns that indicate when the device turns on and off, automatically starting and stopping a timer. This allows for an accurate measurement of how long the device was active.
+                This tool tracks the active usage time of your <strong>SleepGuard</strong> bruxism device by listening for its audio cues. It can now optionally play an alarm on disconnect and allow you to resume the session without losing your progress.
             </p>
         </details>
 
-        <p>Press "Start Listening" and place the phone near your device. If the timer doesn't start with the initial 2 beeps, you can start it manually.</p>
-        
-        <div class="button-group">
+        <div class="settings">
+            <input type="checkbox" id="alarmCheckbox" checked>
+            <label for="alarmCheckbox">Play alarm on disconnect</label>
+        </div>
+
+        <div id="main-controls" class="button-group">
             <button id="startButton">Start Listening</button>
             <button id="manualStartButton" disabled>Manual Start/Stop</button>
+        </div>
+        
+        <div id="paused-controls" class="button-group" style="display: none;">
+            <button id="resumeButton">Resume Session</button>
+            <button id="endSessionButton" class="secondary">End Session for Good</button>
         </div>
 
         <div id="status">Waiting to start session...</div>

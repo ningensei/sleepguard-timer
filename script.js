@@ -30,6 +30,12 @@ const CONFIG = {
 // --- DOM Elements ---
 const startButton = document.getElementById('startButton');
 const manualStartButton = document.getElementById('manualStartButton');
+const alarmCheckbox = document.getElementById('alarmCheckbox');
+const alarmAudio = document.getElementById('alarmAudio');
+const mainControls = document.getElementById('main-controls');
+const pausedControls = document.getElementById('paused-controls');
+const resumeButton = document.getElementById('resumeButton');
+const endSessionButton = document.getElementById('endSessionButton');
 const statusDiv = document.getElementById('status');
 const timerDiv = document.getElementById('timer');
 const startTimeDisplay = document.getElementById('startTimeDisplay');
@@ -50,43 +56,85 @@ let lastBeepTime = 0; // Stores the timestamp of the last detected beep for debo
 let isPaused = false;
 let timerInterval;
 let startTime;
+let pauseTime = 0;
+let totalPausedTime = 0;
 
-// --- Timer Functions ---
+// --- Alarm Functions ---
+function playAlarm() {
+    alarmAudio.play();
+}
+
+function stopAlarm() {
+    alarmAudio.pause();
+    alarmAudio.currentTime = 0; // Rewind to the beginning
+}
+
+// --- Session & Timer Functions ---
 function startTimer() {
     if (timerInterval) return;
     const now = new Date();
     startTime = now.getTime();
+    totalPausedTime = 0; // Reset paused time for new session
     startTimeDisplay.textContent = now.toLocaleString();
     endTimeDisplay.textContent = "--";
     timerInterval = setInterval(updateTimerDisplay, 1000);
     beepCount = 0;
     isPaused = true;
     statusDiv.textContent = '🟢 Timer started. Detection paused for 5s...';
-    
     setTimeout(() => {
         isPaused = false;
-        beepCount = 0; 
-        lastBeepTime = Date.now(); // Fully reset the detection state.
         statusDiv.textContent = '🟢 Timer active. Listening for stop sequence...';
     }, CONFIG.COOLDOWN_PERIOD);
 }
 
-function stopTimer() {
+function stopOrPauseTimer() {
     if (!timerInterval) return;
     clearInterval(timerInterval);
     timerInterval = null;
-    const now = new Date();
-    endTimeDisplay.textContent = now.toLocaleString();
+
+    if (alarmCheckbox.checked) {
+        // --- PAUSE THE SESSION ---
+        isPaused = true; // Stop listening immediately.
+        pauseTime = Date.now();
+        playAlarm();
+        statusDiv.textContent = '🟠 Device disconnected! Session paused.';
+        mainControls.style.display = 'none';
+        pausedControls.style.display = 'block';
+    } else {
+        // --- END THE SESSION ---
+        endSession();
+    }
+}
+
+function resumeSession() {
+    isPaused = false; // Resume listening.
+    stopAlarm();
+    const pausedDuration = Date.now() - pauseTime;
+    totalPausedTime += pausedDuration;
+    timerInterval = setInterval(updateTimerDisplay, 1000);
+    mainControls.style.display = 'block';
+    pausedControls.style.display = 'none';
+    statusDiv.textContent = '🟢 Resuming session. Listening for stop sequence...';
+}
+
+function endSession() {
+    stopAlarm();
     isListening = false;
     beepCount = 0;
+    const now = new Date();
+    endTimeDisplay.textContent = now.toLocaleString();
     statusDiv.textContent = '✅ Session Complete. Press "Start Listening" for a new session.';
+    mainControls.style.display = 'block';
+    pausedControls.style.display = 'none';
     startButton.disabled = false;
     startButton.textContent = 'Start Listening';
     manualStartButton.disabled = true;
 }
 
+
 function updateTimerDisplay() {
-    const elapsed = new Date(Date.now() - startTime);
+    if (!startTime) return;
+    const elapsed = new Date(Date.now() - startTime - totalPausedTime);
     const hours = String(elapsed.getUTCHours()).padStart(2, '0');
     const minutes = String(elapsed.getUTCMinutes()).padStart(2, '0');
     const seconds = String(elapsed.getUTCSeconds()).padStart(2, '0');
@@ -104,7 +152,7 @@ async function startListening() {
         source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
         isListening = true;
-        lastBeepTime = 0; // Reset timestamp on start
+        lastBeepTime = 0;
         startButton.disabled = true;
         startButton.textContent = 'Listening...';
         manualStartButton.disabled = false;
@@ -183,7 +231,7 @@ function detectAndVisualizeBeep() {
             } else {
                 statusText += ` of ${CONFIG.STOP_BEEP_COUNT} to stop.`;
                 if (beepCount >= CONFIG.STOP_BEEP_COUNT) {
-                    stopTimer();
+                    stopOrPauseTimer();
                 }
             }
              statusDiv.textContent = statusText;
@@ -197,8 +245,10 @@ function detectAndVisualizeBeep() {
 startButton.addEventListener('click', startListening);
 manualStartButton.addEventListener('click', () => {
     if (!isPaused) {
-        if (timerInterval) { stopTimer(); } else { startTimer(); }
+        if (timerInterval) { stopOrPauseTimer(); } else { startTimer(); }
     } else {
         console.log("Cannot manually operate timer during cooldown.");
     }
 });
+resumeButton.addEventListener('click', resumeSession);
+endSessionButton.addEventListener('click', endSession);
