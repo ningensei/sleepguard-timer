@@ -15,7 +15,7 @@ const CONFIG = {
     BEEP_DEBOUNCE_MS: 150, 
     
     // Maximum time in ms allowed between beeps in a sequence before the counter resets.
-    MAX_PAUSE_BETWEEN_BEEPS: 400,
+    MAX_PAUSE_BETWEEN_BEEPS: 3000,
     
     // Number of beeps required to start the timer.
     START_BEEP_COUNT: 2,
@@ -218,7 +218,13 @@ function detectAndVisualizeBeep() {
         beepCount++;
         
         clearTimeout(beepResetTimeout);
-        beepResetTimeout = setTimeout(() => { beepCount = 0; }, CONFIG.MAX_PAUSE_BETWEEN_BEEPS);
+        beepResetTimeout = setTimeout(() => {
+            beepCount = 0;
+            // If the timer is still running, reset the status message.
+            if (timerInterval) {
+                statusDiv.textContent = '🟢 Timer active. Listening for stop sequence...';
+            }
+        }, CONFIG.MAX_PAUSE_BETWEEN_BEEPS);
         
         if (beepCount >= 2) {
             let statusText = `Beep detected (${beepCount})`;
