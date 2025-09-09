@@ -2,7 +2,7 @@
 
 A web-based tool that uses the microphone to automatically start and stop a timer by detecting the specific audio cues of a SleepGuard bruxism device.
 
-![SleepGuard Timer Interface](https://drive.google.com/file/d/18RHJ8goWE4gxJ4vrIilsP83Skw8cGnin/view?usp=drive_link) 
+![SleepGuard Timer Interface](https://boddhi.cloud/sleepguard-timer) 
 
 ---
 
