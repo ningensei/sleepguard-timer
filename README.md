@@ -2,8 +2,7 @@
 
 A web-based tool that uses the microphone to automatically start and stop a timer by detecting the specific audio cues of a SleepGuard bruxism device.
 
-![SleepGuard Timer Interface](httpsd://i.imgur.com/your-screenshot-url.png) 
-*Note: You should take a screenshot of your app and replace the URL above.*
+![SleepGuard Timer Interface](https://drive.google.com/file/d/18RHJ8goWE4gxJ4vrIilsP83Skw8cGnin/view?usp=drive_link) 
 
 ---
 
